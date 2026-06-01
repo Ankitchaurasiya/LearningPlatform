@@ -2,7 +2,6 @@ import express from 'express';
 const router = express.Router();
 
 import { users, registerUsers, deregisterUser} from '../ctrl/users.js'
-console.log("user routers");
 
 router.get('/',
     //auth
