@@ -9,7 +9,6 @@ You are building a backend service for an online learning platform.
 The platform allows users to enroll in courses and track their progress.
 
 Requirements
-
 1. User Management
 
 Create an API to register a user.
