@@ -19,7 +19,7 @@ export const users = async (req, res, next) => {
         params.push(limit);
         const limitParam = `$${params.length}`;
 
-        params.push(offset);
+        params.push(skip);
         const offsetParam = `$${params.length}`;
 
         const sql_query = `SELECT * 

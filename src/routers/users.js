@@ -7,9 +7,9 @@ import { users, registerUsers, deregisterUser, userDashboard, leaderBoard} from 
 
 router.get('/',
     //auth
-    validateQuery(usersValidation),
     users
 ).post('/',
+    validateBody(usersValidation),
     registerUsers
 )
 

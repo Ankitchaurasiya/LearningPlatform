@@ -6,7 +6,9 @@ import requestIp from 'request-ip';
 import userRouter from './routers/users.js';
 import courseRouter from './routers/courses.js';
 import enrollmentRouters from './routers/enrollment.js';
+import authRouters from './routers/auth.js';
 import {logger} from './middlewares/logger.js';
+import { authenticate } from './middlewares/authMiddleware.js';
 
 
 const app = express();
@@ -18,7 +20,8 @@ app.get('/', (req, res)=>{
    res.send({message: "server up"});
 })
 
-app.use('/users', userRouter);
+app.use(authRouters);
+app.use('/users', authenticate, userRouter);
 app.use('/courses', courseRouter);
 app.use('/enrollments', enrollmentRouters);
 
