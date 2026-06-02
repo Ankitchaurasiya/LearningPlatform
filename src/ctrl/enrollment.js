@@ -18,9 +18,9 @@ export const registerEnrollments = async (req, res, next) => {
         const { userId, courseId } = req.body;
         const result = (await query(`
                     INSERT INTO ENROLLMENTS (user_id, course_id)
-                    VALUES ('${userId}', '${courseId}')
+                    VALUES ($1, $2)
                     RETURNING *
-            `)).rows;
+            `, [userId, courseId])).rows;
 
         res.status(201).json({message: "Success", data: result});
     } catch (error) {

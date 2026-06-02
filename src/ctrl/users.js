@@ -1,9 +1,22 @@
 import { query } from '../db.js';
 
 export const users = async (req, res, next) => {
-
     try {
-        const result = (await query(`SELECT * FROM USERS`)).rows;
+        let where = [];
+        let params = [];
+        if(req.query.name){
+            params.push(req.query.name);
+            where.push(`name = $${params.length}`);
+        }
+        if(req.query.id){
+            params.push(req.query.id);
+            where.push(`id = $${params.length}`);
+        }
+        const sql_query = `SELECT * 
+                            FROM USERS
+                            ${where.length> 0 ? `where ${where.join(" AND ")}` : ''}
+                            `;
+        const result = (await query(sql_query, params)).rows;
         res.status(200).json({message: "Success", data: result});
         
     } catch (error) {
@@ -30,7 +43,6 @@ export const registerUsers = async (req, res, next) => {
     }
 }
 
-
 export const deregisterUser = async (req, res, next) => {
     try {
         const id = req.params.userId;
@@ -56,16 +68,21 @@ export const userDashboard = async (req, res, next) => {
         const { userId } = req.params;
         const result = (await query(`
                         select 
+                        u.id,
                         u.name, u.email_id, u.username, 
-                        count(*) as enrolled_courses, 
+                        count(e.id) as enrolled_courses, 
                         sum(case when e.progress = 100 then 1 else 0 end ) as completed_courses,
-                        round(AVG(e.progress), 2) as average_progress
+                        COALESCE (round(AVG(e.progress), 2), 0) as average_progress
                         from users u
-                        left join enrollments e on e.user_id = u.id 
+                        left join enrollments e 
+                        on e.user_id = u.id 
                         where u.id = $1
-                        group by u.email_id, u.name, u.username;
+                        group by u.id, u.email_id, u.name, u.username;
                     `, [userId])).rows;
 
+        if(result.length === 0){
+            return  res.status(404).json({message: "not found in DB"});
+        }
         res.status(200).json({message: "Success", data: result});
     } catch (error) {
 
@@ -79,11 +96,12 @@ export const leaderBoard = async (req, res, next) => {
     try {
         const result = (await query(`
                             select  u.name, u.email_id, u.username, 
-                            count(*) as enrolled_courses, 
+                            count(e.id) as enrolled_courses, 
                             sum(case when e.progress = 100 then 1 else 0 end ) as completed_courses,
-                            round(AVG(e.progress), 2) as average_progress
+                            coalesce( round(AVG(e.progress), 2), 0) as average_progress
                             from users u
-                            left join enrollments e on e.user_id = u.id
+                            left join enrollments e 
+                            on e.user_id = u.id
                             group by u.id, u.email_id, u.name, u.username
                             order by completed_courses desc, average_progress DESC;
                         `)).rows;
