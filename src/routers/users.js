@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 
-import { users, registerUsers, deregisterUser} from '../ctrl/users.js'
+import { users, registerUsers, deregisterUser, userDashboard, leaderBoard} from '../ctrl/users.js'
 
 router.get('/',
     //auth
@@ -12,6 +12,14 @@ router.get('/',
 
 router.delete('/:userId', 
     deregisterUser
+)
+
+router.get('/:userId/dashboard', 
+    userDashboard
+)
+
+router.get('/leaderboard',
+    leaderBoard
 )
 
 

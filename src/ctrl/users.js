@@ -18,9 +18,9 @@ export const registerUsers = async (req, res, next) => {
         const { name, email, username } = req.body;
         const result = (await query(`
                     INSERT INTO USERS (name, email_id, username)
-                    VALUES ('${name}', '${email}', '${username}')
+                    VALUES ($1, $2, $3)
                     RETURNING *
-            `)).rows;
+            `, [name, email, username])).rows;
 
         res.status(200).json({message: "Success", data: result});
     } catch (error) {
@@ -34,22 +34,64 @@ export const registerUsers = async (req, res, next) => {
 export const deregisterUser = async (req, res, next) => {
     try {
         const id = req.params.userId;
-        const checkData = (await query(`SELECT * FROM USERS WHERE id = '${id}'`)).rows;
 
-        if(checkData.length == 0) {
-            res.status(404).json({message: "Id not found in DB"});
-
-        } else {
-
-        const result = (await query(`DELETE FROM USERS WHERE id = '${id}'
+        const result = (await query(`DELETE FROM USERS WHERE id = $1
                         RETURNING *
-                        `)).rows;
-        res.status(200).json({message: "file deleted success", data: result});
-        
+                        `, [id])).rows;
+
+        if(result.length === 0){
+            return  res.status(404).json({message: "user not found in DB"});
         }
+        res.status(200).json({message: "file deleted success", data: result});
+
     } catch (error) {
         const errMsg = error.message.length > 100 ? error.message.slice(0, 100) : error.message;
         console.error("error fetching courses: " , errMsg);
         res.status(500).json({error: true, message: error.message})
+    }
+}
+
+export const userDashboard = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const result = (await query(`
+                        select 
+                        u.name, u.email_id, u.username, 
+                        count(*) as enrolled_courses, 
+                        sum(case when e.progress = 100 then 1 else 0 end ) as completed_courses,
+                        round(AVG(e.progress), 2) as average_progress
+                        from users u
+                        left join enrollments e on e.user_id = u.id 
+                        where u.id = $1
+                        group by u.email_id, u.name, u.username;
+                    `, [userId])).rows;
+
+        res.status(200).json({message: "Success", data: result});
+    } catch (error) {
+
+        const errMsg = error.message.length > 100 ? error.message.slice(0, 100) : error.message;
+        console.error("error in users dashboard query: ", errMsg);
+        res.status(500).json({error: true, message: error.message});
+    }
+}
+
+export const leaderBoard = async (req, res, next) => {
+    try {
+        const result = (await query(`
+                            select  u.name, u.email_id, u.username, 
+                            count(*) as enrolled_courses, 
+                            sum(case when e.progress = 100 then 1 else 0 end ) as completed_courses,
+                            round(AVG(e.progress), 2) as average_progress
+                            from users u
+                            left join enrollments e on e.user_id = u.id
+                            group by u.id, u.email_id, u.name, u.username
+                            order by completed_courses desc, average_progress DESC;
+                        `)).rows;
+        
+        res.status(200).json({message: "Success", data: result});
+    } catch (error) {
+        const errMsg = error.message.length > 100 ? error.message.slice(0, 100) : error.message;
+        console.error("error in users dashboard query: ", errMsg);
+        res.status(500).json({error: true, message: error.message});
     }
 }
