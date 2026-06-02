@@ -4,6 +4,9 @@ export const users = async (req, res, next) => {
     try {
         let where = [];
         let params = [];
+        let skip = Number(req.query.skip) || 0;
+        let limit = Number(req.query.limit) || 10;
+
         if(req.query.name){
             params.push(req.query.name);
             where.push(`name = $${params.length}`);
@@ -12,9 +15,17 @@ export const users = async (req, res, next) => {
             params.push(req.query.id);
             where.push(`id = $${params.length}`);
         }
+        
+        params.push(limit);
+        const limitParam = `$${params.length}`;
+
+        params.push(offset);
+        const offsetParam = `$${params.length}`;
+
         const sql_query = `SELECT * 
                             FROM USERS
                             ${where.length> 0 ? `where ${where.join(" AND ")}` : ''}
+                            LIMIT ${limitParam} OFFSET ${offsetParam};
                             `;
         const result = (await query(sql_query, params)).rows;
         res.status(200).json({message: "Success", data: result});

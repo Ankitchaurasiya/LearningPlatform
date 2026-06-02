@@ -1,10 +1,13 @@
 import express from 'express';
 const router = express.Router();
 
+import { validateBody, validateQuery, validateParams } from '../middlewares/validationMiddleware.js';
+import {usersValidation} from '../validation/users.js';
 import { users, registerUsers, deregisterUser, userDashboard, leaderBoard} from '../ctrl/users.js'
 
 router.get('/',
     //auth
+    validateQuery(usersValidation),
     users
 ).post('/',
     registerUsers
